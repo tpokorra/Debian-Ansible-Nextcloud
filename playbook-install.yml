@@ -62,18 +62,12 @@
   ########################################
   ## finish installation and install apps
   ########################################
-  - name: "Set variables for database"
-    set_fact:
-      dbname: "{{user}}"
-      dbuser: "{{user}}"
-    when: dbname is not defined
-
   - name: finish nextcloud installation
     become: yes
     become_user: "{{pac}}-{{user}}"
     shell: |
       # see https://docs.nextcloud.com/server/latest/admin_manual/installation/command_line_installation.html
-      php occ maintenance:install --database "{{nc_dbms}}" --database-name "{{pac}}_{{dbname}}" --database-user "{{pac}}_{{dbuser}}" --database-pass "{{password}}" --admin-user "{{adminuser}}" --admin-pass "{{adminpassword}}" --data-dir "{{data_path}}"
+      php occ maintenance:install --database "mysql" --database-name "{{pac}}_{{dbname}}" --database-user "{{pac}}_{{dbuser}}" --database-pass "{{dbpassword}}" --admin-user "{{adminuser}}" --admin-pass "{{adminpassword}}" --data-dir "{{data_path}}"
     args:
       executable: /bin/bash
       chdir: "/home/pacs/{{pac}}/users/{{user}}/nextcloud"

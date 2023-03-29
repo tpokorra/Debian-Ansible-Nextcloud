@@ -11,9 +11,9 @@ nextcloud:
       domain: "nextcloud.local"
       documentroot: "{{userhome}}/doms/{{domain}}/htdocs-ssl"
 
-      db_name: "nextcloud"
-      db_username: "nextcloud"
-      db_password: "topsecret"
+      dbname: "nextcloud"
+      dbuser: "nextcloud"
+      dbpassword: "topsecret"
       mysql_root_password: "supersecret"
 
       adminuser: my_admin
