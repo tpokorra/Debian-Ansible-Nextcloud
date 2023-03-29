@@ -1,0 +1,7 @@
+/home/pacs/{{pac}}/users/{{user}}/data/nextcloud.log {
+   copytruncate
+   daily
+   rotate 7
+   compress
+   missingok
+}

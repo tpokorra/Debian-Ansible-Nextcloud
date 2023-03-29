@@ -1,0 +1,244 @@
+---
+- hosts: nextcloud
+  become_user: "{{pac}}-{{user}}"
+
+  tasks:
+  #################################
+  ## create directories
+  #################################
+  - name: create directory nextcloud
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    file:
+      path: "/home/pacs/{{pac}}/users/{{user}}/nextcloud"
+      state: directory
+  - name: create directory bin
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    file:
+      path: "/home/pacs/{{pac}}/users/{{user}}/bin"
+      state: directory
+
+  ##################################
+  ## install nextcloud
+  ##################################
+  - name: install nextcloud
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    unarchive:
+      src: https://download.nextcloud.com/server/releases/nextcloud-{{nextcloud_version}}.tar.bz2
+      remote_src: yes
+      dest: /home/pacs/{{pac}}/users/{{user}}/nextcloud
+      extra_opts: [--strip-components=1]
+      creates: /home/pacs/{{pac}}/users/{{user}}/nextcloud/config
+
+  #################################
+  ## setup the data directory
+  #################################
+  - name: create data directory
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    file:
+      path: "/home/pacs/{{pac}}/users/{{user}}/data"
+      state: directory
+      mode: 0744
+      recurse: no
+
+  - name: configure data directory path
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    set_fact:
+      data_path: "/home/pacs/{{pac}}/users/{{user}}/data"
+
+  ##################################
+  ## other software configuration
+  ##################################
+
+  - name: upload logrotate configuration
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    template: dest="/home/pacs/{{pac}}/users/{{user}}/.logrotate" src="templates/logrotate" mode=0600
+
+  ########################################
+  ## finish installation and install apps
+  ########################################
+  - name: "Set variables for database"
+    set_fact:
+      dbname: "{{user}}"
+      dbuser: "{{user}}"
+    when: dbname is not defined
+
+  - name: finish nextcloud installation
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    shell: |
+      # see https://docs.nextcloud.com/server/latest/admin_manual/installation/command_line_installation.html
+      php occ maintenance:install --database "{{nc_dbms}}" --database-name "{{pac}}_{{dbname}}" --database-user "{{pac}}_{{dbuser}}" --database-pass "{{password}}" --admin-user "{{adminuser}}" --admin-pass "{{adminpassword}}" --data-dir "{{data_path}}"
+    args:
+      executable: /bin/bash
+      chdir: "/home/pacs/{{pac}}/users/{{user}}/nextcloud"
+      creates: "/home/pacs/{{pac}}/users/{{user}}/nextcloud/config/config.php"
+
+  - name: install default apps
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    shell: |
+      # see https://docs.nextcloud.com/server/19/admin_manual/configuration_server/occ_command.html#apps-commands-label
+      php -d memory_limit=512M ./occ app:install {{item}}
+    args:
+      executable: /bin/bash
+      chdir: "/home/pacs/{{pac}}/users/{{user}}/nextcloud"
+      creates: "/home/pacs/{{pac}}/users/{{user}}/nextcloud/apps/{{item}}"
+    loop: "{{ ['contacts', 'calendar', 'mail', 'spreed', 'groupfolders', 'twofactor_totp'] }}"
+
+  ##########################
+  ## nextcloud configuration
+  ##########################
+  - name: set the trusted domain
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    lineinfile:
+      path: /home/pacs/{{pac}}/users/{{user}}/nextcloud/config/config.php
+      regexp: "^.*0 => 'localhost',$"
+      line: "    0 => 'localhost', 1 => '{{domain}}',"
+    when: domain == custom_domain
+
+  - name: set the trusted domain with custom_domain
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    lineinfile:
+      path: /home/pacs/{{pac}}/users/{{user}}/nextcloud/config/config.php
+      regexp: "^.*0 => 'localhost',$"
+      line: "    0 => 'localhost', 1 => '{{custom_domain}}',"
+    when: domain != custom_domain
+
+  - name: set the host for the custom_domain
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    lineinfile:
+      path: /home/pacs/{{pac}}/users/{{user}}/nextcloud/config/config.php
+      regexp: "^.*'overwritehost' =>.*,$"
+      line: "  'overwritehost' => '{{custom_domain}}',"
+      insertbefore: '^\)\;'
+    when: domain != custom_domain
+
+  - name: set the host for the trusted_proxies
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    lineinfile:
+      path: /home/pacs/{{pac}}/users/{{user}}/nextcloud/config/config.php
+      regexp: "^.*'trusted_proxies' =>.*,$"
+      line: "  'trusted_proxies' => array (0 => '{{custom_domain}}',),"
+      insertbefore: '^\)\;'
+    when: domain != custom_domain
+
+  - name: configure default_phone_region
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    lineinfile:
+      path: /home/pacs/{{pac}}/users/{{user}}/nextcloud/config/config.php
+      regexp: "^.*'default_phone_region' =>.*,$"
+      line: "  'default_phone_region' => '{{default_phone_region}}',"
+      insertbefore: '^\)\;'
+    when: default_phone_region is defined
+
+  - name: configure skeletondirectory
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    lineinfile:
+      path: /home/pacs/{{pac}}/users/{{user}}/nextcloud/config/config.php
+      regexp: "^.*'skeletondirectory' =>.*,$"
+      line: "  'skeletondirectory' => '',"
+      insertbefore: '^\)\;'
+    when: empty_skeleton_directory is defined and empty_skeleton_directory == True
+
+  - name: configure updater.server.url
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    lineinfile:
+      path: /home/pacs/{{pac}}/users/{{user}}/nextcloud/config/config.php
+      regexp: "^.*'updater.server.url' =>.*,$"
+      line: "  'updater.server.url' => '{{updater_server_url}}',"
+      insertbefore: '^\)\;'
+    when: updater_server_url is defined
+
+  - name: configure data directory
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    lineinfile:
+      path: "/home/pacs/{{pac}}/users/{{user}}/nextcloud/config/config.php"
+      regexp: "^.*'datadirectory' => '.*',$"
+      line: "  'datadirectory' => '/home/pacs/{{pac}}/users/{{user}}/data',"
+
+  ########################
+  ## setup the apache site
+  ########################
+  - name: Check for htdocs-ssl directory
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    stat:
+      path: "/home/pacs/{{pac}}/users/{{user}}/doms/{{domain}}/htdocs-ssl"
+    register: htdocsssl
+  - name: drop htdocs-ssl
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    file:
+       path: "/home/pacs/{{pac}}/users/{{user}}/doms/{{domain}}/htdocs-ssl"
+       state: absent
+    when: htdocsssl.stat.exists and htdocsssl.stat.isdir
+  - name: create symbolic link for htdocs-ssl
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    file:
+      src: "/home/pacs/{{pac}}/users/{{user}}/nextcloud"
+      dest: "/home/pacs/{{pac}}/users/{{user}}/doms/{{domain}}/htdocs-ssl"
+      state: link
+
+  ######################
+  ## upload backup script
+  ######################
+  - name: upload database backup script
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    template: dest="/home/pacs/{{pac}}/users/{{user}}/bin/backup.sh" src="templates/backup.sh" mode=0700
+
+  ####################################
+  ## install cron jobs
+  ####################################
+  - name: run logrotate once a day
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    cron:
+      name: "logrotate"
+      minute: "27"
+      hour: "1"
+      job: "/usr/sbin/logrotate -s $HOME/.logrotate.state $HOME/.logrotate"
+  - name: run nextcloud cronjob
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    cron:
+      name: "nextcloud"
+      minute: "*/5"
+      job: "/usr/bin/php $HOME/nextcloud/cron.php"
+  - name: update all nextcloud apps each night
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    cron:
+      name: "nextcloud app updates"
+      hour: "1"
+      minute: "12"
+      job: "/usr/bin/php $HOME/nextcloud/occ app:update --all -n --no-ansi"
+  - name: backup the database
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    cron:
+      name: "database backup"
+      hour: "1"
+      minute: "23"
+      job: "$HOME/bin/backup.sh"
+
+  - name: upload nextcloud update script
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    template: dest="/home/pacs/{{pac}}/users/{{user}}/bin/update.sh" src="templates/update.sh" mode=0700
+    when: updater_server_url is defined

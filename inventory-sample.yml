@@ -1,0 +1,35 @@
+nextcloud:
+  vars:
+    ansible_user: root
+  hosts:
+    nextcloud.local:
+      pac: "xyz00"
+      user: "nextcloud"
+      userhome: "/home/pacs/{{pac}}/users/{{user}}"
+      password: invalid
+
+      domain: "nextcloud.local"
+      documentroot: "{{userhome}}/doms/{{domain}}/htdocs-ssl"
+
+      db_name: "nextcloud"
+      db_username: "nextcloud"
+      db_password: "topsecret"
+      mysql_root_password: "supersecret"
+
+      adminuser: my_admin
+      adminpassword: CHANGEME
+
+      # see https://getcomposer.org/download/
+      composer_version: 2.4.1
+
+      # see https://nextcloud.com/changelog/#latest25
+      nextcloud_version: 25.0.5
+      updater_server_url: "https://ncupdater.solidcharity.com"
+
+      # default phone region
+      default_phone_region: DE
+
+      # empty skeleton_directory
+      empty_skeleton_directory: True
+
+
