@@ -9,6 +9,7 @@ nextcloud:
       password: invalid
 
       domain: "nextcloud.local"
+      custom_domain: "nextcloud.local"
       documentroot: "{{userhome}}/doms/{{domain}}/htdocs-ssl"
 
       dbname: "nextcloud"
