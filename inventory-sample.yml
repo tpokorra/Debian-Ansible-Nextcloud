@@ -20,11 +20,8 @@ nextcloud:
       adminuser: my_admin
       adminpassword: CHANGEME
 
-      # see https://getcomposer.org/download/
-      composer_version: 2.4.1
-
-      # see https://nextcloud.com/changelog/#latest25
-      nextcloud_version: 25.0.5
+      # see https://nextcloud.com/changelog/#latest30
+      nextcloud_version: 30.0.5
       updater_server_url: "https://ncupdater.solidcharity.com"
 
       # default phone region
