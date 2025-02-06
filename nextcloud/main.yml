@@ -12,16 +12,12 @@
   #################################
   ## create directories
   #################################
-  - name: create directory nextcloud
+  - name: create directories for nextcloud
     become: yes
     file:
-      path: "/home/pacs/{{pac}}/users/{{user}}/nextcloud"
+      path: "{{userhome}}/{{item}}"
       state: directory
-  - name: create directory bin
-    become: yes
-    file:
-      path: "/home/pacs/{{pac}}/users/{{user}}/bin"
-      state: directory
+    loop: "{{ ['nextcloud', 'bin', 'etc', 'var/tmp', 'var/log', 'var/run'] }}"
 
   ##################################
   ## install nextcloud
@@ -126,6 +122,25 @@
       path: "/home/pacs/{{pac}}/users/{{user}}/nextcloud/config/config.php"
       regexp: "^.*'datadirectory' => '.*',$"
       line: "  'datadirectory' => '/home/pacs/{{pac}}/users/{{user}}/data',"
+
+  - name: configure redis for nextcloud
+    become: yes
+    blockinfile:
+      path: "{{userhome}}/nextcloud/config/config.php"
+      marker: "# {mark} redis ANSIBLE MANAGED BLOCK"
+      insertbefore: '^\)\;'
+      block: |2
+          'memcache.local' => '\\OC\\Memcache\\Redis',
+          'memcache.distributed' => '\\OC\\Memcache\\Redis',
+          'memcache.locking' => '\\OC\\Memcache\\Redis',
+          'redis' =>
+          array (
+            'host' => '{{userhome}}/var/run/redis-server.sock',
+            'port' => 0,
+            'password' => '{{redis.password}}',
+            'timeout' => 1.5,
+          ),
+    when: redis.password is defined
 
   - name: Database Optimisations
     become: yes
