@@ -69,6 +69,9 @@
       owner: "www-data"
       mode: "0755"
 
+  - name: add lingering for user for systemctl services
+    command: loginctl enable-linger {{pac}}-{{user}}
+
   #################################
   # Setup repository for newer php
   #################################
@@ -95,10 +98,6 @@
       update_cache: yes
       state: latest
 
-  - name: Set up Apache virtualhost
-    template:
-      src: "templates/domain.conf"
-      dest: "/etc/apache2/sites-available/{{domain}}.conf"
   - name: Set up Apache virtualhost
     copy:
       dest: "/etc/apache2/sites-available/{{domain}}.conf"

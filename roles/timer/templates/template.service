@@ -1,5 +1,5 @@
 [Unit]
-Description={{description}} for {{user.name}}
+Description={{description}} for {{user}}
 
 [Service]
 {% if WorkingDirectory is defined %}WorkingDirectory={{WorkingDirectory}}
