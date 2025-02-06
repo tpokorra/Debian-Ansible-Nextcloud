@@ -127,6 +127,19 @@
       regexp: "^.*'datadirectory' => '.*',$"
       line: "  'datadirectory' => '/home/pacs/{{pac}}/users/{{user}}/data',"
 
+  - name: Database Optimisations
+    become: yes
+    shell: |
+      source ~/.profile
+      php occ db:add-missing-primary-keys --no-interaction || exit -1
+      php occ db:add-missing-columns --no-interaction || exit -1
+      php occ db:add-missing-indices --no-interaction | exit -1
+      php occ db:convert-filecache-bigint --no-interaction || exit -1
+      php occ maintenance:repair --include-expensive || echo "ignoring a problem"
+    args:
+      executable: /bin/bash
+      chdir: "{{userhome}}/nextcloud"
+
   ########################
   ## setup the apache site
   ########################
