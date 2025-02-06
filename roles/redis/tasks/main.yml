@@ -1,0 +1,62 @@
+# install redis if redis.password is defined
+---
+- name: configure redis
+  become: true
+  block:
+    - name: create directory for redis
+      file:
+        path: "{{userhome}}/{{item}}"
+        state: directory
+      loop: "{{ ['etc', 'var/redis', 'var/log', 'var/tmp', 'var/run'] }}"
+
+    - name: upload redis configuration
+      template: dest="{{userhome}}/etc/redis.conf" src="templates/redis.conf" mode=0600
+
+    - name: set redis port
+      ansible.builtin.lineinfile:
+        path: "{{userhome}}/etc/redis.conf"
+        regexp: '^port '
+        line: 'port {{redis.port}}'
+      when: redis.port is defined
+
+    - name: bind to localhost if port is set
+      ansible.builtin.lineinfile:
+        path: "{{userhome}}/etc/redis.conf"
+        regexp: '^bind '
+        line: 'bind 127.0.0.1'
+      when: redis.port is defined
+
+    - name: upload service unit
+      template: dest="{{userhome}}/.config/systemd/user/redis.service" src="templates/redis.service" mode=0600  
+
+    - name: download specific redis binary
+      include_role: name="../../roles/download_binary"
+      vars:
+        signature_key: 4796B710919684AC
+        url: https://download.solidcharity.com/tarballs/hostsharing/hostsharing-binaries/redis-server-{{redis.release}}-debian-bookworm.tar.gz
+        filename: redis-server-{{redis.release}}-debian-bookworm.tar.gz
+      when: redis.release is defined
+
+    - name: run redis service
+      ansible.builtin.systemd:
+        name: redis
+        enabled: true
+        state: started
+        scope: user
+        daemon_reload: true
+
+    - name: rotate the log file
+      blockinfile:
+        path: "{{userhome}}/.logrotate"
+        marker: "# {mark} redis ANSIBLE MANAGED BLOCK"
+        block: |
+          {{userhome}}/var/log/redis.log {
+            copytruncate
+            daily
+            rotate 7
+            compress
+            missingok
+          }
+
+  when: redis.password is defined
+

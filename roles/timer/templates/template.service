@@ -1,0 +1,15 @@
+[Unit]
+Description={{description}} for {{user.name}}
+
+[Service]
+{% if WorkingDirectory is defined %}WorkingDirectory={{WorkingDirectory}}
+{% endif %}
+Environment="PATH=%h/bin:/usr/local/bin:/usr/bin:/bin"
+{% if Environment1 is defined %}Environment="{{Environment1}}"
+{% endif %}
+{% if Environment2 is defined %}Environment="{{Environment2}}"
+{% endif %}
+ExecStartPre=/usr/bin/bash -c "sleep $((RANDOM % {% if RANDOMSECONDS is defined %}{{RANDOMSECONDS}}{%else%}40{% endif %}))"
+ExecStart={{ExecStart}}
+StandardOutput=append:%h/var/log/timer.log
+StandardError=inherit

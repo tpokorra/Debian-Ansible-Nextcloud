@@ -1,0 +1,14 @@
+[Unit]
+Description=Redis User Service
+After=network-online.target
+
+[Service]
+WorkingDirectory=%h/var/redis
+Environment="PATH=/usr/local/bin:/usr/bin:/bin"
+ExecStart=/usr/bin/redis-server %h/etc/redis.conf
+Restart=always
+PrivateTmp=true
+NoNewPrivileges=true
+
+[Install]
+WantedBy=default.target

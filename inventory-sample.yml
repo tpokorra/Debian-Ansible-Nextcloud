@@ -1,6 +1,10 @@
 nextcloud:
   vars:
     ansible_user: root
+    mysql_root_password: "topsecret1"
+    dbpassword: "topsecret2"
+    redis_secret: "topsecret3"
+    adminpassword: "topsecret4"
   hosts:
     nextcloud.local:
       pac: "xyz00"
@@ -9,13 +13,12 @@ nextcloud:
       password: invalid
 
       domain: "nextcloud.local"
-      custom_domain: "nextcloud.local"
       documentroot: "{{userhome}}/doms/{{domain}}/htdocs-ssl"
 
       dbname: "nextcloud"
       dbuser: "nextcloud"
-      dbpassword: "topsecret"
-      mysql_root_password: "supersecret"
+      dbpassword: "{{dbpassword}}"
+      mysql_root_password: "{{mysql_root_password}}"
 
 
       nextcloud:
@@ -24,7 +27,7 @@ nextcloud:
         updater_server_url: "https://ncupdater.solidcharity.com"
 
         adminuser: my_admin
-        adminpassword: CHANGEME
+        adminpassword: "{{adminpassword}}"
 
         # default phone region
         default_phone_region: DE
@@ -32,4 +35,6 @@ nextcloud:
         # empty skeleton_directory
         empty_skeleton_directory: True
 
+      redis:
+        password: "{{redis_secret}}"
 

@@ -1,0 +1,16 @@
+[Unit]
+Description={{description}}
+
+[Timer]
+{% if OnBootSec is defined %}OnBootSec={{OnBootSec}}
+{% endif %}
+{% if OnCalendar is defined %}OnCalendar={{OnCalendar}}
+{% endif %}
+{% if AccuracySec is defined %}AccuracySec={{AccuracySec}}
+{% endif %}
+{% if RandomizedDelaySec is defined %}RandomizedDelaySec={{RandomizedDelaySec}}
+{% endif %}
+Persistent=true
+
+[Install]
+WantedBy=timers.target

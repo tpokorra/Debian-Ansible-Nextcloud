@@ -1,0 +1,43 @@
+# setup a systemd timer
+---
+- name: create directory for log file
+  become: true
+  file:
+    path: "{{userhome}}/var/log"
+    state: directory
+- name: create directory for systemd service files
+  become: true
+  file:
+    path: "{{userhome}}/.config/systemd/user"
+    state: directory
+- name: upload service file for timer
+  become: yes
+  template:
+    src: "templates/template.service"
+    dest: "{{userhome}}/.config/systemd/user/{{name}}.service"
+- name: upload timer file for timer
+  become: yes
+  template:
+    src: "templates/template.timer"
+    dest: "{{userhome}}/.config/systemd/user/{{name}}.timer"
+- name: enable the timer
+  become: yes
+  ansible.builtin.systemd:
+    name: "{{name}}.timer"
+    enabled: true
+    state: started
+    scope: user
+    daemon_reload: true
+- name: insert log file in logrotate
+  become: yes
+  blockinfile:
+    dest: "{{userhome}}/.logrotate"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK timer"
+    block: |
+      {{userhome}}/var/log/timer.log {
+          copytruncate
+          daily
+          rotate 7
+          compress
+          missingok
+      }

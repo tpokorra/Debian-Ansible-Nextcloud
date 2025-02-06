@@ -1,0 +1,15 @@
+# prepare for systemd in user space
+---
+- name: create directory for systemd service files
+  become: true
+  file:
+    path: "{{userhome}}/.config/systemd/user"
+    state: directory
+
+- name: add XDG_RUNTIME_DIR env variable to .profile
+  become: yes
+  lineinfile:
+    path: "{{userhome}}/.profile"
+    line: "export XDG_RUNTIME_DIR=/run/user/$UID"
+    create: true
+    mode: "0755"

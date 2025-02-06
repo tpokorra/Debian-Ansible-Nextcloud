@@ -1,0 +1,16 @@
+# prepare for logrotate
+---
+- name: create .logrotate file
+  become: yes
+  file:
+    path: "{{userhome}}/.logrotate"
+    state: touch
+  
+- name: run logrotate once a day
+  include_role: name="../roles/timer"
+  vars:
+    name: 'logrotate'
+    description: 'logrotate cron job'
+    ExecStart: '/usr/sbin/logrotate -s %h/.logrotate.state %h/.logrotate'
+    OnCalendar: '*-*-* 1:00:00'
+    RandomizedDelaySec: '20 minutes'
