@@ -3,7 +3,7 @@
 export HOME=/home/pacs/{{pac}}/users/{{user}}
 cd $HOME/nextcloud
 
-sed -i "s#'updater.server.url' => '.*'#'updater.server.url' => '{{updater_server_url}}'#g" $HOME/nextcloud/config/config.php
+sed -i "s#'updater.server.url' => '.*'#'updater.server.url' => '{{nextcloud.updater_server_url}}'#g" $HOME/nextcloud/config/config.php
 
 php occ maintenance:mode --on
 

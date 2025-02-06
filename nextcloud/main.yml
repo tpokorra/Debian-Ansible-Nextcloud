@@ -23,7 +23,7 @@
   - name: install nextcloud
     become: yes
     unarchive:
-      src: https://download.nextcloud.com/server/releases/nextcloud-{{nextcloud_version}}.tar.bz2
+      src: https://download.nextcloud.com/server/releases/nextcloud-{{nextcloud.version}}.tar.bz2
       remote_src: yes
       dest: "{{userhome}}/nextcloud"
       extra_opts: [--strip-components=1]
@@ -60,7 +60,7 @@
     become: yes
     shell: |
       # see https://docs.nextcloud.com/server/latest/admin_manual/installation/command_line_installation.html
-      php occ maintenance:install --database "mysql" --database-name "{{pac}}_{{dbname}}" --database-user "{{pac}}_{{dbuser}}" --database-pass "{{dbpassword}}" --admin-user "{{adminuser}}" --admin-pass "{{adminpassword}}" --data-dir "{{data_path}}"
+      php occ maintenance:install --database "mysql" --database-name "{{pac}}_{{dbname}}" --database-user "{{pac}}_{{dbuser}}" --database-pass "{{dbpassword}}" --admin-user "{{nextcloud.adminuser}}" --admin-pass "{{nextcloud.adminpassword}}" --data-dir "{{data_path}}"
     args:
       executable: /bin/bash
       chdir: "/home/pacs/{{pac}}/users/{{user}}/nextcloud"
@@ -119,9 +119,9 @@
     lineinfile:
       path: /home/pacs/{{pac}}/users/{{user}}/nextcloud/config/config.php
       regexp: "^.*'default_phone_region' =>.*,$"
-      line: "  'default_phone_region' => '{{default_phone_region}}',"
+      line: "  'default_phone_region' => '{{nextcloud.default_phone_region}}',"
       insertbefore: '^\)\;'
-    when: default_phone_region is defined
+    when: nextcloud.default_phone_region is defined
 
   - name: configure skeletondirectory
     become: yes
@@ -130,16 +130,16 @@
       regexp: "^.*'skeletondirectory' =>.*,$"
       line: "  'skeletondirectory' => '',"
       insertbefore: '^\)\;'
-    when: empty_skeleton_directory is defined and empty_skeleton_directory == True
+    when: nextcloud.empty_skeleton_directory is defined and nextcloud.empty_skeleton_directory == True
 
   - name: configure updater.server.url
     become: yes
     lineinfile:
       path: /home/pacs/{{pac}}/users/{{user}}/nextcloud/config/config.php
       regexp: "^.*'updater.server.url' =>.*,$"
-      line: "  'updater.server.url' => '{{updater_server_url}}',"
+      line: "  'updater.server.url' => '{{nextcloud.updater_server_url}}',"
       insertbefore: '^\)\;'
-    when: updater_server_url is defined
+    when: nextcloud.updater_server_url is defined
 
   - name: configure data directory
     become: yes
@@ -210,4 +210,4 @@
   - name: upload nextcloud update script
     become: yes
     template: dest="/home/pacs/{{pac}}/users/{{user}}/bin/update.sh" src="templates/update.sh" mode=0700
-    when: updater_server_url is defined
+    when: nextcloud.updater_server_url is defined

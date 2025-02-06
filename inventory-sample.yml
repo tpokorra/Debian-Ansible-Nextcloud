@@ -17,17 +17,19 @@ nextcloud:
       dbpassword: "topsecret"
       mysql_root_password: "supersecret"
 
-      adminuser: my_admin
-      adminpassword: CHANGEME
 
-      # see https://nextcloud.com/changelog/#latest30
-      nextcloud_version: 30.0.5
-      updater_server_url: "https://ncupdater.solidcharity.com"
+      nextcloud:
+        # see https://nextcloud.com/changelog/#latest30
+        version: 30.0.5
+        updater_server_url: "https://ncupdater.solidcharity.com"
 
-      # default phone region
-      default_phone_region: DE
+        adminuser: my_admin
+        adminpassword: CHANGEME
 
-      # empty skeleton_directory
-      empty_skeleton_directory: True
+        # default phone region
+        default_phone_region: DE
+
+        # empty skeleton_directory
+        empty_skeleton_directory: True
 
 
